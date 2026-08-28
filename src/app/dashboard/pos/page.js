@@ -203,6 +203,9 @@ export default function POSPage() {
                                 <span className="text-lg font-bold text-blue-600 mt-1">
                                     ₱{Number(product.price).toFixed(2)}
                                 </span>
+                                <span className="text-xs text-gray-500 mt-1">
+                                    Stock: {product.quantity}
+                                </span>
                             </button>
                         ))}
                     </div>

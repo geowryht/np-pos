@@ -2,57 +2,85 @@
 
 import { useEffect, useState, useRef } from "react";
 import { getTransactions } from "@/lib/supabase/transactions";
+import { getCategories } from "@/lib/supabase/categories";
 import Loading from "@/components/shared/loading";
 import Error from "@/components/shared/error";
 
 export default function TransactionsPage() {
     const [transactions, setTransactions] = useState([]);
+    const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [dateFilter, setDateFilter] = useState("all");
+    const [categoryFilter, setCategoryFilter] = useState("all");
     const printRef = useRef();
     const [selectedTransaction, setSelectedTransaction] = useState(null);
 
     useEffect(() => {
-        async function loadTransactions() {
-            const { data, error } = await getTransactions();
-            if (error) {
-                setError(error.message);
+        async function loadData() {
+            const [transactionsRes, categoriesRes] = await Promise.all([
+                getTransactions(),
+                getCategories(),
+            ]);
+
+            if (transactionsRes.error) {
+                setError(transactionsRes.error.message);
             } else {
-                setTransactions(data || []);
+                setTransactions(transactionsRes.data || []);
+            }
+
+            if (categoriesRes.error) {
+                setError(categoriesRes.error.message);
+            } else {
+                setCategories(categoriesRes.data || []);
             }
             setLoading(false);
         }
 
-        loadTransactions();
+        loadData();
     }, []);
 
-    const getFilteredTransactions = () => {
+    const matchesDate = (t) => {
         const now = new Date();
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const transDate = new Date(t.created_at);
 
-        return transactions.filter(t => {
-            const transDate = new Date(t.created_at);
+        switch (dateFilter) {
+            case "today":
+                return transDate >= today;
+            case "weekly":
+                const weekAgo = new Date(today);
+                weekAgo.setDate(weekAgo.getDate() - 7);
+                return transDate >= weekAgo;
+            case "monthly":
+                const monthAgo = new Date(today);
+                monthAgo.setMonth(monthAgo.getMonth() - 1);
+                return transDate >= monthAgo;
+            case "yearly":
+                const yearAgo = new Date(today);
+                yearAgo.setFullYear(yearAgo.getFullYear() - 1);
+                return transDate >= yearAgo;
+            default:
+                return true;
+        }
+    };
 
-            switch (dateFilter) {
-                case "today":
-                    return transDate >= today;
-                case "weekly":
-                    const weekAgo = new Date(today);
-                    weekAgo.setDate(weekAgo.getDate() - 7);
-                    return transDate >= weekAgo;
-                case "monthly":
-                    const monthAgo = new Date(today);
-                    monthAgo.setMonth(monthAgo.getMonth() - 1);
-                    return transDate >= monthAgo;
-                case "yearly":
-                    const yearAgo = new Date(today);
-                    yearAgo.setFullYear(yearAgo.getFullYear() - 1);
-                    return transDate >= yearAgo;
-                default:
-                    return true;
-            }
+    const matchesCategory = (t) => {
+        if (categoryFilter === "all") return true;
+        if (!Array.isArray(t.items)) return false;
+
+        const selectedCategory = categories.find(c => c.id === categoryFilter);
+        const selectedName = selectedCategory?.name;
+
+        return t.items.some((item) => {
+            const itemCategory = item.category_name || item.category || "Unknown";
+            const itemCategoryId = item.category_id || item.category || "";
+            return itemCategoryId === categoryFilter || itemCategory === selectedName;
         });
+    };
+
+    const getFilteredTransactions = () => {
+        return transactions.filter(t => matchesDate(t) && matchesCategory(t));
     };
 
     const handlePrint = () => {
@@ -124,6 +152,19 @@ export default function TransactionsPage() {
                         <option value="yearly">This Year</option>
                     </select>
 
+                    <select
+                        value={categoryFilter}
+                        onChange={(e) => setCategoryFilter(e.target.value)}
+                        className="border rounded px-3 py-2 text-sm"
+                    >
+                        <option value="all">All Categories</option>
+                        {categories.map((cat) => (
+                            <option key={cat.id} value={cat.id}>
+                                {cat.name}
+                            </option>
+                        ))}
+                    </select>
+
                     <button
                         onClick={handlePrint}
                         className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm"
@@ -144,6 +185,7 @@ export default function TransactionsPage() {
                                 dateFilter === "today" ? "Today" :
                                     dateFilter === "weekly" ? "This Week" :
                                         dateFilter === "monthly" ? "This Month" : "This Year"}
+                            {categoryFilter !== "all" && ` - ${categories.find(c => c.id === categoryFilter)?.name || "Category"}`}
                         </p>
                     </div>
 
