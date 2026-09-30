@@ -1,36 +1,37 @@
-import { supabase } from "./client";
+async function handleResponse(response) {
+    const payload = await response.json();
 
-// Get all users (metadata from auth.users)
+    if (!response.ok) {
+        return { data: null, error: new Error(payload.error || "User request failed.") };
+    }
+
+    return { data: payload.data ?? null, error: null };
+}
+
 export async function getUsers() {
-    const { data, error } = await supabase
-        .from("users")
-        .select("*");
-    return { data, error };
+    return handleResponse(await fetch("/api/users"));
 }
 
-// Create a user (for user metadata table, NOT for passwords)
-// Use Supabase Auth for actual authentication
-export async function createUser({ name, email, role }) {
-    const { data, error } = await supabase
-        .from("users")
-        .insert([{ name, email, role }]);
-    return { data, error };
+export async function createUser({ name, email, password, role }) {
+    return handleResponse(await fetch("/api/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password, role }),
+    }));
 }
 
-// Update a user
-export async function updateUser(id, { name, email, role }) {
-    const { data, error } = await supabase
-        .from("users")
-        .update({ name, email, role })
-        .eq("id", id);
-    return { data, error };
+export async function updateUser(id, updates) {
+    return handleResponse(await fetch("/api/users", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, ...updates }),
+    }));
 }
 
-// Delete a user
 export async function deleteUser(id) {
-    const { data, error } = await supabase
-        .from("users")
-        .delete()
-        .eq("id", id);
-    return { data, error };
+    return handleResponse(await fetch("/api/users", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+    }));
 }

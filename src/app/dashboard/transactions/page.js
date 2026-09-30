@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { getTransactions } from "@/lib/supabase/transactions";
 import { getCategories } from "@/lib/supabase/categories";
 import Loading from "@/components/shared/loading";
@@ -13,7 +13,6 @@ export default function TransactionsPage() {
     const [error, setError] = useState("");
     const [dateFilter, setDateFilter] = useState("all");
     const [categoryFilter, setCategoryFilter] = useState("all");
-    const printRef = useRef();
     const [selectedTransaction, setSelectedTransaction] = useState(null);
 
     useEffect(() => {
@@ -83,11 +82,68 @@ export default function TransactionsPage() {
         return transactions.filter(t => matchesDate(t) && matchesCategory(t));
     };
 
-    const handlePrint = () => {
-        const printContent = printRef.current;
-        const originalContents = document.body.innerHTML;
+    const escapeHtml = (value) => String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
 
+    const buildPrintMarkup = () => {
+        const reportLabel = dateFilter === "all" ? "All Time"
+            : dateFilter === "today" ? "Today"
+                : dateFilter === "weekly" ? "This Week"
+                    : dateFilter === "monthly" ? "This Month"
+                        : "This Year";
+
+        const categoryLabel = categoryFilter === "all"
+            ? null
+            : categories.find(c => c.id === categoryFilter)?.name || "Category";
+        const heading = categoryLabel ? `${reportLabel} - ${categoryLabel}` : reportLabel;
+
+        const rows = filteredTransactions.map((transaction) => `
+            <tr>
+                <td>${escapeHtml(new Date(transaction.created_at).toLocaleString())}</td>
+                <td>${escapeHtml(formatItems(transaction.items))}</td>
+                <td>${escapeHtml(formatCategories(transaction.items))}</td>
+                <td>${escapeHtml(transaction.cashier || "-")}</td>
+                <td class="text-right">PHP ${Number(transaction.total || 0).toFixed(2)}</td>
+                <td class="text-right">PHP ${Number(transaction.cash || 0).toFixed(2)}</td>
+                <td class="text-right">PHP ${Number(transaction.change || 0).toFixed(2)}</td>
+            </tr>
+        `).join("");
+
+        return `
+            <h1>Transactions Report</h1>
+            <p>${escapeHtml(heading)}</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Products</th>
+                        <th>Category</th>
+                        <th>Cashier</th>
+                        <th class="text-right">Total</th>
+                        <th class="text-right">Cash</th>
+                        <th class="text-right">Change</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="4" class="text-right"><strong>Grand Total:</strong></td>
+                        <td class="text-right"><strong>PHP ${grandTotal.toFixed(2)}</strong></td>
+                        <td colspan="2"></td>
+                    </tr>
+                </tfoot>
+            </table>
+        `;
+    };
+
+    const handlePrint = () => {
         const printWindow = window.open('', '', 'height=600,width=800');
+        if (!printWindow) return;
+
         printWindow.document.write('<html><head><title>Transactions Report</title>');
         printWindow.document.write('<style>');
         printWindow.document.write(`
@@ -100,7 +156,7 @@ export default function TransactionsPage() {
             h1 { margin-bottom: 10px; }
         `);
         printWindow.document.write('</style></head><body>');
-        printWindow.document.write(printContent.innerHTML);
+        printWindow.document.write(buildPrintMarkup());
         printWindow.document.write('</body></html>');
         printWindow.document.close();
         printWindow.print();
@@ -177,7 +233,7 @@ export default function TransactionsPage() {
             {filteredTransactions.length === 0 ? (
                 <p className="text-gray-500">No transactions found.</p>
             ) : (
-                <div ref={printRef}>
+                <div>
                     <div className="hidden print:block mb-4">
                         <h1>Transactions Report</h1>
                         <p className="text-sm text-gray-500">

@@ -1,16 +1,45 @@
 import { NextResponse } from "next/server";
+import { rateLimit } from "@/lib/security/rateLimit";
+import { ensureSameOrigin, getClientIdentifier, jsonError } from "@/lib/security/request";
 
 const cookieOptions = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "lax",
+  path: "/",
 };
 
-export async function POST(request) {
-    const { accessToken, refreshToken, expiresAt } = await request.json();
+function applyRateLimit(request, action) {
+  const identifier = getClientIdentifier(request);
+  const result = rateLimit({
+    key: `auth-session:${action}:${identifier}`,
+    limit: 20,
+    windowMs: 60 * 1000,
+  });
 
-    if (!accessToken || !refreshToken) {
+  if (result.success) {
+    return null;
+  }
+
+  return jsonError("Too many requests. Please try again shortly.", 429, {
+    "Retry-After": Math.ceil((result.resetAt - Date.now()) / 1000).toString(),
+  });
+}
+
+export async function POST(request) {
+  const sameOriginError = ensureSameOrigin(request);
+  if (sameOriginError) {
+    return sameOriginError;
+  }
+
+  const rateLimitError = applyRateLimit(request, "post");
+  if (rateLimitError) {
+    return rateLimitError;
+  }
+
+  const { accessToken, refreshToken, expiresAt } = await request.json();
+
+  if (!accessToken || !refreshToken) {
         return NextResponse.json({ error: "Missing tokens" }, { status: 400 });
     }
 
@@ -25,9 +54,19 @@ export async function POST(request) {
     return response;
 }
 
-export async function DELETE() {
-    const response = NextResponse.json({ ok: true });
-    response.cookies.set("sb-access-token", "", { ...cookieOptions, maxAge: 0 });
-    response.cookies.set("sb-refresh-token", "", { ...cookieOptions, maxAge: 0 });
-    return response;
+export async function DELETE(request) {
+  const sameOriginError = ensureSameOrigin(request);
+  if (sameOriginError) {
+    return sameOriginError;
+  }
+
+  const rateLimitError = applyRateLimit(request, "delete");
+  if (rateLimitError) {
+    return rateLimitError;
+  }
+
+  const response = NextResponse.json({ ok: true });
+  response.cookies.set("sb-access-token", "", { ...cookieOptions, maxAge: 0 });
+  response.cookies.set("sb-refresh-token", "", { ...cookieOptions, maxAge: 0 });
+  return response;
 }

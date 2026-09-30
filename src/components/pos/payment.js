@@ -6,8 +6,10 @@ import Button from "@/components/ui/button";
 export default function Payment({ total = 0, onConfirm }) {
   const [cash, setCash] = useState("");
 
-  const cashAmount = parseFloat(cash) || 0;
-  const change = cashAmount - total;
+  const cashAmount = parseFloat(cash);
+  const hasValidCash = Number.isFinite(cashAmount);
+  const change = hasValidCash ? cashAmount - total : 0;
+  const canSubmit = total > 0 && hasValidCash && cashAmount >= total;
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -17,14 +19,19 @@ export default function Payment({ total = 0, onConfirm }) {
       return;
     }
 
-    if (parseFloat(cash) < total) {
+    if (!hasValidCash) {
+      alert("Enter a valid cash amount.");
+      return;
+    }
+
+    if (cashAmount < total) {
       alert("Cash is not enough!");
       return;
     }
 
     onConfirm({
       total,
-      cash: parseFloat(cash),
+      cash: cashAmount,
       change,
     });
 
@@ -51,7 +58,7 @@ export default function Payment({ total = 0, onConfirm }) {
 
         <Button
           type="submit"
-          disabled={cash < total}
+          disabled={!canSubmit}
           className={`w-full ${total <= 0 ? "opacity-50 cursor-not-allowed" : ""
             }`}
         >
