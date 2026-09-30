@@ -45,7 +45,9 @@ export async function createProduct({ name, price, category, quantity, image_url
 
     const { data, error } = await supabase
         .from("products")
-        .insert([{ name, price, category, quantity: Number(quantity), image_url }]);
+        .insert([{ name, price, category, quantity: Number(quantity), image_url }])
+        .select()
+        .single();
     return { data, error };
 }
 
@@ -74,7 +76,9 @@ export async function updateProduct(id, { name, price, category, quantity, image
     const { data, error } = await supabase
         .from("products")
         .update({ name, price, category, quantity: Number(quantity), image_url })
-        .eq("id", id);
+        .eq("id", id)
+        .select()
+        .single();
     return { data, error };
 }
 

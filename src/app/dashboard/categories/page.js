@@ -37,10 +37,7 @@ export default function CategoriesPage() {
             return;
         }
 
-        setCategories([...categories, { 
-            id: data[0]?.id || Date.now(), 
-            name: newCategory 
-        }]);
+        setCategories([...categories, data]);
         setNewCategory("");
     }
 

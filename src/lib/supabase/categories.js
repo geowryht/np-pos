@@ -18,7 +18,9 @@ export async function createCategory({ name }) {
 
     const { data, error } = await supabase
         .from("categories")
-        .insert([{ name }]);
+        .insert([{ name }])
+        .select()
+        .single();
     return { data, error };
 }
 
@@ -34,7 +36,9 @@ export async function updateCategory(id, { name }) {
     const { data, error } = await supabase
         .from("categories")
         .update({ name })
-        .eq("id", id);
+        .eq("id", id)
+        .select()
+        .single();
     return { data, error };
 }
 
