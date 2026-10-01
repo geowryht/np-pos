@@ -16,7 +16,7 @@ export default function Cart({ initialItems, onIncrease, onDecrease, onRemove, o
     const itemCount = initialItems.reduce((sum, item) => sum + item.quantity, 0);
 
     return (
-        <div className="border border-gray-300 rounded-lg shadow-lg text-gray-600 flex flex-col">
+        <div className="min-w-0 overflow-hidden border border-gray-300 rounded-lg shadow-lg text-gray-600 flex flex-col">
             <button
                 onClick={toggleExpand}
                 className="flex items-center justify-between w-full p-3 hover:bg-gray-50"
@@ -42,7 +42,7 @@ export default function Cart({ initialItems, onIncrease, onDecrease, onRemove, o
                     {initialItems.length === 0 ? (
                         <p className="text-gray-500 py-4 text-center">empty</p>
                     ) : (
-                        <div className="flex flex-col gap-2 max-h-48 overflow-y-auto py-2">
+                        <div className="flex flex-col gap-2 max-h-48 overflow-y-auto overflow-x-hidden py-2">
                             {initialItems.map((item) => (
                                 <CartItem
                                     key={item.id}

@@ -7,8 +7,8 @@ export default function CartItem({
 }) {
     return (
         <div className="flex items-center justify-between border-b py-3">
-            <div>
-                <p className="font-medium">{item.name}</p>
+            <div className="min-w-0">
+                <p className="font-medium break-words">{item.name}</p>
                 <p className="text-gray-500 text-sm">₱{item.price} x {item.quantity}</p>
             </div>
 

@@ -149,9 +149,9 @@ export default function POSPage() {
     if (error) return <Error message={error} />;
 
     return (
-        <div className="flex flex-col xl:flex-row gap-2 h-[calc(100vh-140px)]">
+        <div className="flex h-full min-h-0 min-w-0 w-full flex-col xl:flex-row gap-2">
             {/* Left Side - Products */}
-            <div className="flex-1 flex flex-col min-h-0 overflow-hidden bg-gray-50 rounded-lg p-3">
+            <div className="flex-1 flex flex-col min-h-0 min-w-0 overflow-hidden bg-gray-50 rounded-lg p-3">
                 {/* Category Tabs */}
                 <div className="flex gap-2 overflow-x-auto pb-3 mb-3 shrink-0 border-b border-gray-200">
                     <button
@@ -178,26 +178,26 @@ export default function POSPage() {
                 </div>
 
                 {/* Product Cards - scrollable */}
-                <div className="flex-1 overflow-y-auto px-1">
-                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
+                <div className="min-w-0 flex-1 overflow-y-auto overflow-x-hidden px-1">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
                         {filteredProducts.map((product) => (
                             <button
                                 key={product.id}
                                 onClick={() => addToCart(product)}
-                                className="bg-white rounded-xl shadow-sm hover:shadow-lg cursor-pointer transition-all duration-200 p-3 flex flex-col items-center"
+                                className="min-w-0 w-full overflow-hidden bg-white rounded-xl shadow-sm hover:shadow-lg cursor-pointer transition-all duration-200 p-3 flex flex-col items-center"
                             >
                                 {product.image_url ? (
                                     <img
                                         src={product.image_url}
                                         alt={product.name}
-                                        className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg mb-2"
+                                        className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 object-cover rounded-lg mb-2"
                                     />
                                 ) : (
-                                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg mb-2 flex items-center justify-center text-gray-400">
+                                    <div className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg mb-2 flex items-center justify-center text-gray-400">
                                         <span className="text-2xl">+</span>
                                     </div>
                                 )}
-                                <span className="text-sm font-semibold text-gray-800 line-clamp-2 text-center w-full">
+                                <span className="text-sm font-semibold text-gray-800 line-clamp-2 break-words text-center w-full min-w-0">
                                     {product.name}
                                 </span>
                                 <span className="text-lg font-bold text-blue-600 mt-1">
@@ -219,7 +219,7 @@ export default function POSPage() {
             </div>
 
             {/* Right Side - Cart + Payment */}
-            <div className="w-full xl:w-80 2xl:w-96 flex-shrink-0 flex flex-col gap-2">
+            <div className="w-full xl:w-80 2xl:w-96 flex-shrink-0 min-w-0 flex flex-col gap-2">
                 <div className="bg-white rounded-lg flex-1 overflow-hidden flex flex-col">
                     <Cart
                         initialItems={cartItems}

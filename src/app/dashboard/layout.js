@@ -58,7 +58,7 @@ export default function DashboardLayout({ children }) {
 
     return (
         <POSSearchProvider>
-            <div className="flex min-h-screen">
+            <div className="flex h-screen overflow-hidden print:h-auto print:overflow-visible">
                 {/* Mobile sidebar overlay */}
                 {sidebarOpen && (
                     <div
@@ -69,9 +69,9 @@ export default function DashboardLayout({ children }) {
 
                 <Sidebar isAdmin={isAdmin} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-                <div className="flex flex-col flex-1">
+                <div className="flex min-w-0 flex-1 flex-col">
                     <Navbar onMenuClick={() => setSidebarOpen(true)} />
-                    <main className="flex-1 p-4 md:p-6 bg-gray-50">
+                    <main className="flex-1 min-h-0 min-w-0 overflow-y-auto p-4 md:p-6 bg-gray-50 print:overflow-visible">
                         {children}
                     </main>
                     <Footer />
